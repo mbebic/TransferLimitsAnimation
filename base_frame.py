@@ -14,16 +14,19 @@ from numpy import cos, sin
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+from matplotlib.path import Path
 
 #%% Define colors, scaling, etc
 atu = 0.8 # Angle to use as a relative value to 2*pi
 R = 2 # radius for the perimeter of the chart
-kr = 1.1
+kr = 1.2
 xlims = [-R*kr,R*kr]
 ylims = [-R*kr,R*kr]
+kl = 1.1
+
 
 #%% Input actual data 
-AreaNames= ['A', 'B', 'C', 'D']
+AreaNames= ['A', 'B', 'C', 'D', 'E']
 # Flows between areas, defined as a matrix
 #MaxFlows = np.array([[np.nan, 100.  , 200.  , 400.],
 #                     [100.  , np.nan, 200.  , np.nan],
@@ -54,7 +57,8 @@ aStep = np.pi*2/nAr
 th1 = np.arange(0, 2*np.pi, aStep)
 x1 = R*cos(th1) #x coordinates for ref. angles of area
 y1 = R*sin(th1) #y coordinates for ref. angles of area
-
+x1a = kl*R*cos(th1)
+y1a = kl*R*sin(th1)
 #%% Drawing the arcs
 subDegs = np.linspace(10, 40, nAr)
 subRads = subDegs*np.pi/180
@@ -73,7 +77,17 @@ for i in range(0, MaxFlows.shape[0]):
             PiCx = 0 - x1[i]
             PiCy = 0 - y1[i]
             
-            print('x[%d] = %g, y[%d] = %g, x to origin = %g, y to origin = %g' %(i, Pijx, j, Pijy, PiCx, PiCy))
+            #print('x[%d] = %g, y[%d] = %g, x to origin = %g, y to origin = %g' %(i, Pijx, j, Pijy, PiCx, PiCy))
+            
+            kCom = (Pijx*PiCy) - (Pijy*PiCx)
+            
+            #print('k value in vector = %g' %(kCom))
+            
+#            if kCom < 0:
+#                print('K value points to the left')
+#            else:
+#                print('K value points to the right')
+            
 
 #if j = y , skip calculation
 #%%creates a circle
@@ -88,14 +102,62 @@ ax.plot(x,y)
 # ax.scatter(x1,y1, c='lime')
 ax.scatter(x1,y1, c='#535353')
 ax.scatter(x2,y2, c='red')
-
-ax.set_xlim(xlims)
-ax.set_ylim(ylims)
-ax.axis('equal')
-ax.grid()
-
-plt.show()
+#ax.annotate('marija', xy=(0,0), xytext=(0,0), horizontalalignment='center', verticalalignment='center', rotation=30.0)
+#ax.annotate(['marija','jovan'], xy=((0,0),(0,1)), horizontalalignment='center', verticalalignment='center', rotation=[30.0, 60.0])
+for i in range(0, MaxFlows.shape[0]):
+    ax.annotate(AreaNames[i], xy=(x1a[i], y1a[i]), 
+                horizontalalignment='center',
+                verticalalignment='center')
+                #rotation=th1[i]*180/np.pi)
+for i in range(0, MaxFlows.shape[0]):
+    for j in range(i+1, MaxFlows.shape[1]):
+        if not np.isnan(MaxFlows[i,j]):
+            print('arc exists between: %d , %d' %(i,j))
+            #midpoint (golden section) calculation
+            print('x1 = %g, x2 = %g, y1 = %g, y2 = %g' %(x1[i], x1[j], y1[i], y1[j]))
+            mdptx = (x1[i]+x1[j])/2
+            mdpty = (y1[i]+y1[j])/2
+            print('Midpoint between i and j is %g, %g' %(mdptx, mdpty))
+            
+            goldsectx = mdptx/2
+            goldsecty = mdpty/2
+            print('Golden section point equals: %g, %g' %(goldsectx, goldsecty))
+            
+            verts = [
+                    (x1[i], y1[i]),
+                    (goldsectx, goldsecty),
+                    (goldsectx, goldsecty),
+                    (x1[j], y1[j])]
     
+#Bezier Curve beginning
+            
+            codes = [Path.MOVETO,
+                     Path.CURVE4,
+                     Path.CURVE4,
+                     Path.CURVE4,
+                     ]
+            
+            path = Path(verts, codes)
+            
+            patch = mpatches.PathPatch(path, facecolor='none', lw=2)
+            ax.add_patch(patch)
+            
+            if False:
+                xs, ys = zip(*verts)
+                ax.plot(xs, ys, 'x--', lw=2, color='black', ms=10)
+                
+                ax.text(-0.05, -0.05, 'P0')
+                ax.text(0.15, 1.05, 'P1')
+                ax.text(1.05, 0.85, 'P2')
+                ax.text(0.85, -0.05, 'P3')
+            
+            ax.set_xlim(xlims)
+            ax.set_ylim(ylims)
+            ax.axis('equal')
+            ax.grid()
+            
+            plt.show()
+
 #%% This part is the reference for code
 if False:
     fig, ax = plt.subplots()
