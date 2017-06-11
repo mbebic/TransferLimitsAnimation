@@ -46,5 +46,5 @@ Multiple contributors will create a sandwich recipe
   * peppers
 1. Choose dressing:
   * mayo
-  * chipottle
+  * chipotle
   * ranch
