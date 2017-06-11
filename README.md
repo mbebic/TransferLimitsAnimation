@@ -8,3 +8,10 @@ It's very easy to make some words **bold** and other words *italic* with Markdow
     1. Provolone
     1. Swiss
     1. Cheddar
+1. Toasted
+1. Veggies
+    * lettuce
+    * tomatoes
+    * spinach
+    * black olives
+    
