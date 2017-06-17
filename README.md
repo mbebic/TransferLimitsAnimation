@@ -21,30 +21,8 @@ http://www.pjm.com
 1. HQ - Hydro Quebec http://www.hydroquebec.com/international/en/
 1. IESO - Independent System Operator Ontario http://www.ieso.ca/
 
-@jbebic1965 finish the Introduction    
+The transfers between connected areas have time-dependent values and the input file supplies records of these transfers over time. The transfers can be recorded in two formats:
+* **wide:** where rows are corresponding to time stamps and columns to pairs of areas with values of flow recorded in the table.
+* **long:** where each row documents just one exchange value, resulting in time records repeating over multiple rows to capture values of flows between all connected areas.
 
-
-# Practicing writing styles
-It's very easy to make some words **bold** and other words *italic* with Markdown. You can even [link to Google!](http://google.com)
-
-# Practicing GitHub collaboration
-Multiple contributors will create a sandwich recipe  
-## SUBWAY sandwich
-1. Choose bread
-1. Select your meat
-1. Select cheese:
-  * Provolone
-  * Swiss
-  * Cheddar
-1. Toasted?
-  - [x] yes
-1. Add veggies:
-  * lettuce
-  * tomatoes
-  * spinach
-  * black olives
-  * peppers
-1. Choose dressing:
-  * mayo
-  * chipotle
-  * ranch
+The preference here is given to **long** format because the width of the records does not depend on the number of connected area pairs. The input files will be delivered in [hdf5 format](http://support.hdfgroup.org/HDF5/), and ingested into this tool using Python Data Analysis Library, the so-called [Pandas](http://pandas.pydata.org/). Pandas support computationally efficient **pivoting** (transformation of long format into wide) and **melting** (transformation of wide into long format). The compressed HDF5 format is more size-efficent when it deals with fixed record widths.

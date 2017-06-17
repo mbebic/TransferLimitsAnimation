@@ -1,0 +1,111 @@
+% ******************************************************************************
+% File name: Documentation.tex
+% Title:   Documentation for Transfer Limits Animation
+% Subject: Documentation based on refercng portions of listing
+%
+% Created: June 11, 2017
+% Original Issue: Pending
+% Last Edited: June 11, 2017
+% Latest Rev. #: 0
+%
+% Ref. Docs.:
+%
+% Revision Notes:
+% Rev.0 (June 11/2017 by JZB) Template
+% ******************************************************************************
+%
+%        1         2         3         4         5         6         7         8
+% 345678901234567890123456789012345678901234567890123456789012345678901234567890
+%
+
+\documentclass[12pt]{report}
+
+% List of all packages is included here
+\input{Packages.tex}
+
+\renewcommand\lstlistlistingname{List of Listings}
+
+\makeindex
+
+\title{Transfer Limits Animation}
+\author{Jovan Bebi\'{c}\\[0.5ex]
+        Marija Bebi\'{c}}
+
+\begin{document}
+\pagenumbering{roman} % Changes page numbering to roman
+\maketitle
+
+\begin{abstract}
+This document is a LaTeX template for creating code documentation. It is typeset
+\emph{report} document class, which means that it has chapters and sections.
+The main purpose of the document is to illustrates use of figures and listings,
+but it also showcases cross referencing bibliography entries, etc.
+\end{abstract}
+
+\pagenumbering{arabic} % Returns to arabic page numbering
+\section*{Revision Notes}
+\begin{tabularx}{\textwidth}{|p{1in}|l|c|X|}
+\hline
+Authors & Date & Rev & Notes \\
+\hline
+JZB & Jun 11-14, 2017 & Draft & Template for use by others \\
+\hline
+\end{tabularx}
+
+\tableofcontents
+\listoffigures
+\addcontentsline{toc}{chapter}{\lstlistlistingname}{\lstlistoflistings}
+\lstlistoflistings
+
+\doublespacing
+\chapter{Introduction}
+\label{ch:intro}
+This is a template LaTeX file useful when preparing software documentation. It
+is compiled with pdflatex using included DOS batch file called runAll.bat. In the following
+\section{Including and captioning figures}
+\label{sec:figures}
+An example figure is shown in Fig.~\ref{fig:1}.
+
+\begin{figure*}%[t]
+  \centering %
+  \includegraphics[scale=0.8, page=1]{visuals/Plots1}
+  \caption[Area markers] {Area markers arranged on a circle} %
+  \label{fig:1}
+\end{figure*}
+
+\clearpage
+
+\section{Including and anotating code}
+\label{sec:code}
+
+\singlespacing
+\lstinputlisting[language=python,caption={\lstname},label=lst:1, linerange={85-95}]{code/base_frame.py}
+\doublespacing
+
+\section{Other formatting}
+
+\singlespacing
+\begin{enumerate}
+  \item Preprocess historic AMI data to enable study based on actual measurements.
+  \item Execute OpenDSS in snapshot mode to review voltage contours at a wide
+        range of operating conditions.
+  \item Review the resulting patterns and place OpenDSS \emph{monitors} at
+        nodes that experience greatest voltage change.
+  \item Execute OpenDSS in temporal mode to collect temporal voltage recordings
+        at monitored nodes.
+  \item Review voltage histograms at monitored buses to quantify the frequency
+        and magnitude of voltage excursions.
+\end{enumerate}
+\doublespacing
+
+In the following sections, we briefly describe the tool-chains that facilitate
+this process.
+
+\clearpage
+
+\bibliographystyle{IEEEtran} % "plain" is another option
+% \bibliography{Ph2report_EC}
+
+\clearpage
+
+\end{document}
