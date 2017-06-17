@@ -68,7 +68,9 @@ def OutputCirclePage(pltPdf, x, y, x1, y1, x2, y2, AreaNames, MaxFlows):
     ax.plot(x,y)
     # ax.scatter(x1,y1, c='lime')
     ax.scatter(x1,y1, c='#535353')
-    ax.scatter(x2,y2, c='red')
+    #ax.scatter(x2,y2, c='red')
+    ax.scatter(x3,y3, c='blue')
+    ax.scatter(x4,y4, c='red')
     #ax.annotate('marija', xy=(0,0), xytext=(0,0), horizontalalignment='center', verticalalignment='center', rotation=30.0)
     #ax.annotate(['marija','jovan'], xy=((0,0),(0,1)), horizontalalignment='center', verticalalignment='center', rotation=[30.0, 60.0])
     for i in range(0, MaxFlows.shape[0]):
@@ -132,7 +134,9 @@ def OutputCirclePageB(pltPdf, x, y, x1, y1, x2, y2, AreaNames, MaxFlows):
     ax.plot(x,y)
     # ax.scatter(x1,y1, c='lime')
     ax.scatter(x1,y1, c='#535353')
-    ax.scatter(x2,y2, c='red')
+    #ax.scatter(x2,y2, c='red')
+    ax.scatter(x3,y3, c='blue')
+    ax.scatter(x4,y4, c='red')
     #ax.annotate('marija', xy=(0,0), xytext=(0,0), horizontalalignment='center', verticalalignment='center', rotation=30.0)
     #ax.annotate(['marija','jovan'], xy=((0,0),(0,1)), horizontalalignment='center', verticalalignment='center', rotation=[30.0, 60.0])
     for i in range(0, MaxFlows.shape[0]):
@@ -183,6 +187,80 @@ def OutputCirclePageB(pltPdf, x, y, x1, y1, x2, y2, AreaNames, MaxFlows):
     else:
         plt.show()
     return
+
+#%%function to draw the arcs between the gray and red points
+
+def ArcsBetweenPoints(pltPdf, x, y, x1, y1, x2, y2, AreaNames, MaxFlows):
+    fig, (ax) = plt.subplots(nrows=1, ncols=1,
+                             figsize=(6,6),
+                             sharex=True)
+    title = 'Transfer Limits'
+    fig.suptitle(title) # This titles the figure
+    
+    ax.plot(x,y) #places circle
+    # ax.scatter(x1,y1, c='lime')
+    ax.scatter(x1,y1, c='#535353') #places gray dots
+    #ax.scatter(x2,y2, c='red') #places red dots
+    ax.scatter(x3,y3, c='blue')
+    ax.scatter(x4,y4, c='red')
+    #ax.annotate('marija', xy=(0,0), xytext=(0,0), horizontalalignment='center', verticalalignment='center', rotation=30.0)
+    #ax.annotate(['marija','jovan'], xy=((0,0),(0,1)), horizontalalignment='center', verticalalignment='center', rotation=[30.0, 60.0])
+    for i in range(0, MaxFlows.shape[0]):
+        ax.annotate(AreaNames[i], xy=(x1a[i], y1a[i]), 
+                    horizontalalignment='center',
+                    verticalalignment='center')
+                    #rotation=th1[i]*180/np.pi)
+    for i in range(0, MaxFlows.shape[0]):
+        for j in range(i+1, MaxFlows.shape[1]):
+            if not np.isnan(MaxFlows[i,j]):
+                print('arc exists between: %d , %d' %(i,j))
+                #midpoint (golden section) calculation
+                print('x1 = %g, x2 = %g, y1 = %g, y2 = %g' %(x1[i], x1[j], y1[i], y1[j]))
+                mdptx = (x1[i]+x1[j])/2
+                mdpty = (y1[i]+y1[j])/2
+                print('Midpoint between i and j is %g, %g' %(mdptx, mdpty))
+                
+                goldsectx = 2.*mdptx/3.
+                goldsecty = 2.*mdpty/3.
+                print('Golden section point equals: %g, %g' %(goldsectx, goldsecty))
+                
+                print('x2 and y2 values are : %g, %g' %(x2[i], y2[i]))
+                
+                #vector translation for arc angle
+                #distPoint1 = np.sqrt([((x1[i]-0)*(x1[i]-0))+((y1[i]-0)*(y1[i]-0))])
+                #distPoint2 = np.sqrt([((x2[i]-0)^2)+((y2[i]-0)^2)])
+                
+                #print('distance between points are: %g' %(distPoint1))
+                
+                verts = [
+                        (x1[i], y1[i]),
+                        (goldsectx, goldsecty),
+                        (goldsectx, goldsecty),
+                        (x1[j], y1[j])]
+        
+                #Bezier Curve beginning
+                
+                codes = [Path.MOVETO,
+                         Path.CURVE4,
+                         Path.CURVE4,
+                         Path.CURVE4,
+                         ]
+                
+                path = Path(verts, codes)
+                
+                patch = mpatches.PathPatch(path, facecolor='none', lw=2.)
+                ax.add_patch(patch)
+                
+                ax.set_xlim(xlims)
+                ax.set_ylim(ylims)
+                ax.axis('equal')
+                ax.grid()
+    if OutputPlots:
+        pltPdf.savefig() # Saves fig to pdf
+        plt.close() # Closes fig to clean up memory
+    else:
+        plt.show()
+    return
             
 
 #%% Capture start time of code execution and open log file
@@ -195,7 +273,7 @@ foutLog.write('%s\n\n' %(codeCopyright))
 foutLog.write('Run started on: %s\n\n' %(str(codeTstart)))
 
 #%% Define colors, scaling, etc
-atu = 0.8 # Angle to use as a relative value to 2*pi
+atu = 0.9 # Angle to use as a relative value to 2*pi
 R = 2 # radius for the perimeter of the chart
 kr = 1.2
 xlims = [-R*kr,R*kr]
@@ -262,10 +340,12 @@ x2 = R*cos(th1-subRads)
 y2 = R*sin(th1-subRads)
 
 #%% For loop determing if the vector from i to j passes to right/left relative to center, looking from i
+
+# initialize flow tallies
+left_tally = np.zeros((nAr))
+right_tally = np.zeros((nAr))
+
 for i in range(0, nAr):
-    # initialize flow tallies
-    left_tally = np.zeros((nAr))
-    right_tally = np.zeros((nAr))
     for j in range(0, nAr):
         #print('x[%d] = %g; y[%d] = %g' %(j, x1[j], j, y1[j]))
         if not np.isnan(MaxFlows[i,j]):
@@ -292,6 +372,104 @@ for i in range(0, nAr):
     foutLog.write('Point %d, Left tally total: %g; Right tally total: %g\n' %(i, left_tally[i], right_tally[i]))
 
 #if j = y , skip calculation
+#%%Calculating the right/left tally arcs and theta array value
+#left tally
+k3 = 0.9
+x3 = k3*R*cos(th1-(left_tally*flowScale))
+y3 = k3*R*sin(th1-(left_tally*flowScale))
+
+th3 = th1 + left_tally*flowScale
+x3a = k3*R*cos(th3)
+y3a = k3*R*sin(th3)
+
+#right tally
+k4 = 0.95
+x4 = k4*R*cos(th1-(right_tally*flowScale))
+y4 = k4*R*sin(th1-(right_tally*flowScale))
+
+th4 = th1 + right_tally*flowScale
+x4a = k3*R*cos(th4)
+y4a = k3*R*sin(th4)
+
+#%%drawing arcs
+def arc_patch(R, th1, th3, th4, step, t):
+    # generate the points
+    #step = np.pi/180/2
+    t = np.arange(0,th1,2)
+    n = np.arange(0,th3,2)
+#    points = np.vstack((radius*np.cos(theta) + center[0], 
+#                        radius*np.sin(theta) + center[1]))
+#    # build the polygon and add it to the axes
+#    poly = mpatches.Polygon(points.T, closed=True, **kwargs)
+#    ax.add_patch(poly)
+#    return poly
+#    ax[0].plot([-1,1],[1,-1], 'r', zorder = -10)
+#    filled_arc((0.,0.3), 1, 90, 180, ax[0], 'blue')
+#    ax[0].set_title('version 1')
+#    
+#    # simpler approach, which really is just the arc
+#    ax[1].plot([-1,1],[1,-1], 'r', zorder = -10)
+#    arc_patch((0.,0.3), 1, 90, 180, ax=ax[1], fill=True, color='blue')
+#    ax[1].set_title('version 2')
+
+#        ax.set_xlim(xlims)
+#        ax.set_ylim(ylims)
+#        ax.axis('equal')
+#        ax.grid()
+#    if OutputPlots:
+#        pltPdf.savefig() # Saves fig to pdf
+#        plt.close() # Closes fig to clean up memory
+#    else:
+#        plt.show()
+#    return
+#    
+
+#%%testing arc drawing
+fg, ax = plt.subplots(1, 1)
+pac = mpatches.Arc([0, -2.5], 5, 5, angle=0, theta1=45, theta2=135)
+ax.add_patch(pac)
+
+center = [0,0]
+angle = 0
+theta1 = 45*(np.pi/180)
+theta2 = 135*(np.pi/180)
+
+ax.axis([-2, 2, -2, 2])
+ax.set_aspect("equal")
+fg.canvas.draw()
+
+col='rgbkmcyk'
+
+def filled_arc(center,r,theta1,theta2):
+
+    # Range of angles
+    phi=np.linspace(theta1,theta2,100)
+
+    # x values
+    x=center[0]+r*np.sin(np.radians(phi))
+
+    # y values. need to correct for negative values in range theta=90--270
+    yy = np.sqrt(r-x**2)
+    yy = [-yy[i] if phi[i] > 90 and phi[i] < 270 else yy[i] for i in range(len(yy))]
+
+    y = center[1] + np.array(yy)
+
+    # Equation of the chord
+    m=(y[-1]-y[0])/(x[-1]-x[0])
+    c=y[0]-m*x[0]
+    y2=m*x+c
+
+    # Plot the filled arc
+    ax.fill_between(x,y,y2,color=col[theta1/45])
+
+# Lets plot a whole range of arcs
+#for i in [0,45,90,135,180,225,270,315]:
+filled_arc([0,0],1,45*np.pi/180,135*np.pi/180+45)
+
+ax.axis([-2, 2, -2, 2])
+ax.set_aspect("equal")
+fg.savefig('filled_arc.png')
+                
 #%%defines a circle
 th = np.arange(0, 2*np.pi, np.pi/100)
 x = R*cos(th)
@@ -305,6 +483,8 @@ if OutputPlots:
 
 OutputCirclePage(pltPdf1, x, y, x1, y1, x2, y2, AreaNames, MaxFlows)
 OutputCirclePageB(pltPdf1, x, y, x1, y1, x2, y2, AreaNames, MaxFlows)
+ArcsBetweenPoints(pltPdf1, x, y, x1, y1, x2, y2, AreaNames, MaxFlows)
+filled_arc(pltPdf1, center, r, theta1, theta2)
     
 #%% Closing plot files
 if OutputPlots:

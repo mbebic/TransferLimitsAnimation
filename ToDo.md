@@ -6,5 +6,8 @@
 1. [] @jbebic1965 post an example of LaTeX file
 1. [] @mbebic annotate points on circle with correct orientation
 
+#Task list for 06/12/2017
+
+
 # Issues 06/11/2017
 1. #1 Calculations may be incorrect
