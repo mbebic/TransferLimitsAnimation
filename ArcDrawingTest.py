@@ -28,7 +28,7 @@ fig, ax = plt.subplots(1, 1)
 # Place the circle on the axes
 ax.plot(x,y, alpha=1.0)
 
-if False:
+if True:
     #creates an  unfilled arc
     pac = mpatches.Arc([0, 0], 2*R, 2*R, angle=0, theta1=45, theta2=90, color='r')
     ax.add_patch(pac)
@@ -43,7 +43,7 @@ else:
 ax.axis([-2.2, 2.2, -2.2, 2.2])
 ax.set_aspect("equal")
 ax.grid()
-ax.set_axisbelow()
+# ax.set_axisbelow()
 
 fig.canvas.draw()
 

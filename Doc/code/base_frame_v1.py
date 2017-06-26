@@ -300,25 +300,22 @@ MaxFlows = np.array([[np.nan, 100. , 100. , np.nan, 100.],
                      [np.nan, np.nan, 100. , np.nan, 100.],
                      [100. , 100. , np.nan, 100. , np.nan]])
 
-TallyAngles = np.zeros_like(MaxFlows) # holds values of anbgle by which the point is seen relative to the center
-                                      # If point to the left of the center, angle is negative; if to the right, positive
-
-# xStart = np.zeros_like(MaxFlows)
-# yStart = np.zeros_like(MaxFlows)
-
 #%% Calculate angle scale for flows
 # Take max angle from MaxFlows array and the number of flows and divide the 
 # circle into segments that represent flows. 
-# flowScale = 2.*np.pi*atu/np.nansum(MaxFlows) # rad/MW
-nAr = MaxFlows.shape[0] # Number of areas in input data
-flowScale = 2.*np.pi/nAr*atu/2./np.max(np.nansum(MaxFlows, axis=0)) # rad/MW
+flowScale = 2.*np.pi*atu/np.nansum(MaxFlows) # rad/MW
 print ('flowScale: %.3f (rad/MW)' %(flowScale))
 print ('flowScale: %g (rad/MW)' %(flowScale))
 print ('flowScale: %.3f (rad/MW), %.3f (deg/MW)' %(flowScale, flowScale*180./np.pi))
 
 #%% Calculate reference points for flow areas
+nAr = MaxFlows.shape[0] # Number of areas in input data
 aStep = np.pi*2/nAr 
 th1 = np.arange(0, 2*np.pi, aStep)
+x1 = R*cos(th1) #x coordinates for ref. angles of area
+y1 = R*sin(th1) #y coordinates for ref. angles of area
+x1a = kl*R*cos(th1)
+y1a = kl*R*sin(th1)
 
 #echo input data to log file
 foutLog.write('The MaxFlows matrix has %d rows and %d columns\n' %(MaxFlows.shape[0], MaxFlows.shape[1]))
@@ -335,14 +332,18 @@ if MaxFlows.shape[0] != len(AreaNames):
     foutLog.write('Number of area names does not match the dimension of MaxFlows matrix, exiting...\n')
     sys.exit('Number of area names does not match the dimension of MaxFlows matrix, exiting')
 
+#%% Drawing the arcs
+subDegs = np.linspace(10, 40, nAr)
+subRads = subDegs*np.pi/180
+#th2 = np.arange(0, 2*np.pi, np.pi*2/nAr)
+x2 = R*cos(th1-subRads)
+y2 = R*sin(th1-subRads)
 
 #%% For loop determing if the vector from i to j passes to right/left relative to center, looking from i
 
 # initialize flow tallies
 left_tally = np.zeros((nAr))
 right_tally = np.zeros((nAr))
-x1 = R*cos(th1) #x coordinates for ref. angles of area
-y1 = R*sin(th1) #y coordinates for ref. angles of area
 
 for i in range(0, nAr):
     for j in range(0, nAr):
@@ -350,44 +351,45 @@ for i in range(0, nAr):
         if not np.isnan(MaxFlows[i,j]):
             print('Point i = %d, point j = %d' %(i, j))
             foutLog.write('Point i = %d, point j = %d\n' %(i, j))
-            # Setting up to use vector product as an indicator if the point is to the left or right
-            # vector delta from x1[i] to x1[j], origin at x1[i] tip at x1[j]
-            Pijx = x1[j] - x1[i] # delta in x
-            Pijy = y1[j] - y1[i] # in y
-            # vector delta from x1[i] to Center, origin at x1[i] tip at Center
-            PiCx = 0 - x1[i] # delta in x
-            PiCy = 0 - y1[i] # in y
+            Pijx = x1[j] - x1[i]
+            Pijy = y1[j] - y1[i]
+            PiCx = 0 - x1[i]
+            PiCy = 0 - y1[i]
             
             print('x[%d] = %g, y[%d] = %g, x to origin = %g, y to origin = %g' %(i, Pijx, j, Pijy, PiCx, PiCy))
             foutLog.write('x[%d] = %g, y[%d] = %g, x to origin = %g, y to origin = %g\n' %(i, Pijx, j, Pijy, PiCx, PiCy))
             
-            # k coordinate of vector product
             kCom = (Pijx*PiCy) - (Pijy*PiCx)
             #print('k value in vector = %g' %(kCom))
-
-            # determine angle between x1[i]->C and x1[i]->x1[j] using scalar product and cosine theorem
-            Pijmag = np.sqrt(Pijx*Pijx+Pijy*Pijy)
-            PiCmag = np.sqrt(PiCx*PiCx+PiCy*PiCy)
-            temp = (Pijx*PiCx + Pijy*PiCy)/(Pijmag*PiCmag)
 
             if kCom < 0:
                 # print('K value points to the left')
                 left_tally[i] = left_tally[i] + MaxFlows[i,j]
-                TallyAngles[i,j] = -np.arccos(temp)/np.pi*180.
             else:
                 #print('K value points to the right')
                 right_tally[i] = right_tally[i] + MaxFlows[i,j]
-                TallyAngles[i,j] = np.arccos(temp)/np.pi*180.
-                    
     print('Point %d, Left tally total: %g; Right tally total: %g' %(i, left_tally[i], right_tally[i]))
     foutLog.write('Point %d, Left tally total: %g; Right tally total: %g\n' %(i, left_tally[i], right_tally[i]))
 
 #if j = y , skip calculation
 #%%Calculating the right/left tally arcs and theta array value
 #left tally
+k3 = 0.9
+#x3 = k3*R*cos(th1-(left_tally*flowScale))
+#y3 = k3*R*sin(th1-(left_tally*flowScale))
+
 th3 = th1 - left_tally*flowScale
+x3a = k3*R*cos(th3)
+y3a = k3*R*sin(th3)
+
 #right tally
+k4 = 0.95
+#x4 = k4*R*cos(th1+(right_tally*flowScale))
+#y4 = k4*R*sin(th1+(right_tally*flowScale))
+
 th4 = th1 + right_tally*flowScale
+x4a = k3*R*cos(th4)
+y4a = k3*R*sin(th4)
 
 #%%defines a circle
 th = np.arange(0, 2*np.pi, np.pi/100)
@@ -441,36 +443,32 @@ def arcDrawing(pltPdf, x, y, x1, y1, x2, y2, AreaNames, MaxFlows):
 # fig.canvas.draw()
 #%% checking the right/left tallies
 
-def tallyDrawing(pltPdf, R, th1, th3, th4, AreaNames, MaxFlows, TallyAngles):
+print('The right tally mark at point 0 is: %g' %(right_tally[0]))
+
+def tallyDrawing(pltPdf, x, y, x1, y1, x2, y2, AreaNames, MaxFlows):
     fig, (ax) = plt.subplots(nrows=1, ncols=1,
                              figsize=(6,6),
                              sharex=True)
     title = 'Transfer Limits'
     fig.suptitle(title) # This titles the figure
     
-    x1 = R*cos(th1) #x coordinates for ref. angles of area
-    y1 = R*sin(th1) #y coordinates for ref. angles of area
+    # ax.plot(x,y)
+    # ax.scatter(x1,y1, c='lime')
     ax.scatter(x1,y1, c='#535353')
-
-    x3a = R*cos(th3) #x coordinates for ref. angles of area
-    y3a = R*sin(th3) #y coordinates for ref. angles of area
+    #ax.scatter(x2,y2, c='red')
     ax.scatter(x3a,y3a, c='blue')
-
-    x4a = R*cos(th4) #x coordinates for ref. angles of area
-    y4a = R*sin(th4) #y coordinates for ref. angles of area
     ax.scatter(x4a,y4a, c='red')
     #ax.annotate('marija', xy=(0,0), xytext=(0,0), horizontalalignment='center', verticalalignment='center', rotation=30.0)
     #ax.annotate(['marija','jovan'], xy=((0,0),(0,1)), horizontalalignment='center', verticalalignment='center', rotation=[30.0, 60.0])
 
                 #arc drawing
     for a in np.arange(0, nAr):
-    # for a in [2]:
         #right tally; going from th1 to th4 
         pac = mpatches.Arc([0, 0], 2*R, 2*R, angle=0, theta1=th1[a]*180/np.pi, theta2=th4[a]*180/np.pi, color='r')
         ax.add_patch(pac)
         
         #left tally; going from th3 to th1
-        pac = mpatches.Arc([0, 0], 2.0*R, 2.0*R, angle=0, theta1=th3[a]*180/np.pi, theta2=th1[a]*180/np.pi, color='b')
+        pac = mpatches.Arc([0, 0], 1.9*R, 1.9*R, angle=0, theta1=th3[a]*180/np.pi, theta2=th1[a]*180/np.pi, color='b')
         ax.add_patch(pac)
         
 #        #splitting up right tally(at least, the attempt to)
@@ -487,72 +485,32 @@ def tallyDrawing(pltPdf, R, th1, th3, th4, AreaNames, MaxFlows, TallyAngles):
 #                    pac = mpatches.Arc([0, 0], 1.9*R, 1.9*R, angle=0, theta1=left_tally[d], theta2=th1[a]*180/np.pi, color='yellow')
 #                    ax.add_patch(pac)
 #        
-#        #right tally
-#        pac = mpatches.Arc([0, 0], 2*R, 2*R, angle=0, theta1=th1[0], theta2=right_tally[2], color='green')
-#        ax.add_patch(pac)
+        #right tally
+        pac = mpatches.Arc([0, 0], 2*R, 2*R, angle=0, theta1=th1[0], theta2=right_tally[2], color='green')
+        ax.add_patch(pac)
+        
+        verts = [
+                (x1[0], y1[0]),
+                (0., 0.),
+                (0., 0.),
+                (x1[1], right_tally[1])]
+        
+                #Bezier Curve beginning
+                
+        codes = [Path.MOVETO,
+                 Path.CURVE4,
+                 Path.CURVE4,
+                 Path.CURVE4,
+                 ]
+        
+        path = Path(verts, codes)
+        
+        patch = mpatches.PathPatch(path, facecolor='none', lw=2., color='yellow')
+        ax.add_patch(patch)
 #        
 #        #left tally
 #        pac = mpatches.Arc([0, 0], 2*R, 2*R, angle=0, theta1=left_tally[a], theta2=x1[a], color='yellow')
 #        ax.add_patch(pac)
-        
-        # Draw right arcs
-        ig = np.where(TallyAngles[a,:] > 0) # find indices of tally angles greater than zero
-        igs = np.argsort(TallyAngles[a,ig]) # sort those elements in ascending sequence and return indices
-        # loop a pair of indices: j is the endpoint index, k is the corresponding sum
-        for j,k in zip(ig[0][igs[0]],np.arange(1,len(ig[0])+1)):
-            if True: # j > a
-                flowSumStart = np.nansum(MaxFlows[a,ig[0]][igs[0]][0:k]) # 
-                xStart = R*np.cos(th1[a] + flowSumStart*flowScale)
-                yStart = R*np.sin(th1[a] + flowSumStart*flowScale)
-                # leave end point to be the center of range, for now
-                xEnd = R*np.cos(th1[j])
-                yEnd = R*np.sin(th1[j])
-                        
-                #Bezier Curve
-                xMid = ((xStart+xEnd)/2. + 0.0)/2.0
-                yMid = ((yStart+yEnd)/2. + 0.0)/2.0
-                verts = [
-                        (xStart, yStart),
-                        (xMid, yMid),
-                        (xMid, yMid),
-                        (xEnd, yEnd)]
-                codes = [Path.MOVETO,
-                         Path.CURVE4,
-                         Path.CURVE4,
-                         Path.CURVE4]
-                path = Path(verts, codes)
-                patch = mpatches.PathPatch(path, facecolor='none', lw=2, edgecolor='red')
-                ax.add_patch(patch)
-
-        # Draw left arcs
-        ig = np.where(TallyAngles[a,:] < 0) # find indices of tally angles greater than zero
-        igs = np.argsort(-TallyAngles[a,ig]) # sort those elements in ascending sequence and return indices
-        # loop a pair of indices: j is the endpoint index, k is the corresponding sum
-        for j,k in zip(ig[0][igs[0]],np.arange(1,len(ig[0])+1)):
-            if True: # j > a:
-                temp = np.nansum(MaxFlows[a,ig[0]][igs[0]][0:k]) # 
-                xStart = R*np.cos(th1[a] - temp*flowScale)
-                yStart = R*np.sin(th1[a] - temp*flowScale)
-                # leave end point to be the center of range, for now
-                xEnd = R*np.cos(th1[j])
-                yEnd = R*np.sin(th1[j])
-                        
-                #Bezier Curve
-                xMid = ((xStart+xEnd)/2. + 0.0)/2.0
-                yMid = ((yStart+yEnd)/2. + 0.0)/2.0
-                verts = [
-                        (xStart, yStart),
-                        (xMid, yMid),
-                        (xMid, yMid),
-                        (xEnd, yEnd)]
-                codes = [Path.MOVETO,
-                         Path.CURVE4,
-                         Path.CURVE4,
-                         Path.CURVE4]
-                path = Path(verts, codes)
-                patch = mpatches.PathPatch(path, facecolor='none', lw=2, edgecolor='blue')
-                ax.add_patch(patch)
-
         
     ax.set_xlim(xlims)
     ax.set_ylim(ylims)
@@ -576,8 +534,8 @@ if OutputPlots:
 #OutputCirclePage(pltPdf1, x, y, x1, y1, x2, y2, AreaNames, MaxFlows)
 #OutputCirclePageB(pltPdf1, x, y, x1, y1, x2, y2, AreaNames, MaxFlows)
 #ArcsBetweenPoints(pltPdf1, x, y, x1, y1, x2, y2, AreaNames, MaxFlows)
-# arcDrawing(pltPdf1, x, y, x1, y1, x2, y2, AreaNames, MaxFlows)
-tallyDrawing(pltPdf1, R, th1, th3, th4, AreaNames, MaxFlows, TallyAngles)
+arcDrawing(pltPdf1, x, y, x1, y1, x2, y2, AreaNames, MaxFlows)
+tallyDrawing(pltPdf1, x, y, x1, y1, x2, y2, AreaNames, MaxFlows)
     
 #%% Closing plot files
 if OutputPlots:

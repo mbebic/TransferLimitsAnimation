@@ -441,6 +441,8 @@ def arcDrawing(pltPdf, x, y, x1, y1, x2, y2, AreaNames, MaxFlows):
 # fig.canvas.draw()
 #%% checking the right/left tallies
 
+print('The right tally mark at point 0 is: %g' %(right_tally[0]))
+
 def tallyDrawing(pltPdf, R, th1, th3, th4, AreaNames, MaxFlows, TallyAngles):
     fig, (ax) = plt.subplots(nrows=1, ncols=1,
                              figsize=(6,6),
